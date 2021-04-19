@@ -5,6 +5,7 @@ Oblivious Transfer Extension
 
     python Sender.py
 
-2. run Reciver.py
-   
-    python Receive.py
+2. run Receiver.py
+
+    python Receiver.py
+

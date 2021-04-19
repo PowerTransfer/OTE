@@ -145,4 +145,3 @@ if __name__ == '__main__':
     server.send(pickle.dumps(enc_msg))
     server_socket.close()
 
-    
