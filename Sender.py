@@ -8,11 +8,11 @@ import pickle
 POWMOD_GMP_SIZE = pow(2, 64)
 
 class Sender():
-    def __init__(self, msgs, k=5, random_bit=216):
+    def __init__(self, msgs, k=5, random_bit=1024):
         self.msgs = msgs
         self.k = k
         self.rdOracle = sha1()
-        self.random_num = number.getRandomNumber(random_bit)
+        self.random_bit = random_bit
 
     def powmod(self, a, b, c):
         """
@@ -74,22 +74,33 @@ class Sender():
     def hash(self, data):
         return sha1(data).hexdigest()
 
+    def generate_random_big_number(self, random_bit, big_num):
+        gene_num = big_num
+        while True:
+            gene_num = number.getRandomNumber(random_bit)
+            if gene_num < big_num:
+                break
+        return gene_num
+
     def generate_s(self):
         self.s = list(np.random.randint(0, 2, self.k))
 
     def encrypt_s(self, pks_ns):
         pks = pks_ns[0]
         ns = pks_ns[1]
+        self.random_num = []
         encrypt_mat = []
         for i, pk in enumerate(pks):
-            encrypt_random_num = self.powmod(self.random_num, pk[self.s[i]], ns[i][self.s[i]])
+            random = self.generate_random_big_number(self.random_bit, ns[i][self.s[i]])
+            self.random_num.append(random)
+            encrypt_random_num = self.powmod(random, pk[self.s[i]], ns[i][self.s[i]])
             encrypt_mat.append(encrypt_random_num)
         return encrypt_mat
 
     def generate_Q(self, mat):
         Q = []
         for i, t in enumerate(mat):
-            q = self.byte_xor(t[self.s[i]], self.int_to_bytes(self.random_num), len(self.msgs))
+            q = self.byte_xor(t[self.s[i]], self.int_to_bytes(self.random_num[i]), len(self.msgs))
             Q.append(list(q))
 
         Q = [[i[j] for i in Q] for j in range(len(Q[0]))]
@@ -109,7 +120,7 @@ class Sender():
 if __name__ == '__main__':
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('127.0.0.1', 1234))
+    server_socket.bind(('127.0.0.1', 12345))
     server_socket.listen(5)
     server, addr = server_socket.accept()
 
@@ -132,6 +143,6 @@ if __name__ == '__main__':
     sender.generate_Q(enceypt_T)
     enc_msg = sender.encode_msg()
     server.send(pickle.dumps(enc_msg))
-
     server_socket.close()
 
+    

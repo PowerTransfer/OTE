@@ -126,17 +126,17 @@ class Receiver():
         T = [[i[j] for i in T0] for j in range(len(T0[0]))]
         decode_msg = []
         for i, msgs in enumerate(encode_msg):
-            dec_msg_bytes = self.byte_xor(msgs[self.r[i]], self.str_to_bytes(self.hash(bytes(T[i]))), 20)
-            dec_msg = self.bytes_to_str(dec_msg_bytes)
+            dec_msg_bytes = self.byte_xor(msgs[self.r[i]], self.str_to_bytes(self.hash(bytes(T[i]))))
+            dec_msg = self.bytes_to_str(dec_msg_bytes).strip(b'\x00'.decode())
             decode_msg.append(dec_msg)
         return decode_msg
 
 
 if __name__ == '__main__':
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('127.0.0.1', 1234))
+    client.connect(('127.0.0.1', 12345))
 
-    choice = [1, 0, 1, 0, 1, 0, 0]
+    choice = [1, 0, 1, 0, 1, 0, 1]
     receiver = Receiver(r=choice, k=5)
     receiver.generate_T()
     pks_ns = receiver.get_pks()
@@ -146,9 +146,8 @@ if __name__ == '__main__':
     encrypt_T = receiver.encrypt_T(k)
     client.send(pickle.dumps(encrypt_T))
     enc_msg = pickle.loads(client.recv(102400))
-
     decode_msg = receiver.decode_msg(enc_msg)
-    print('r:', receiver.r)
-    print('decode_msg:', decode_msg)
+    print(choice)
+    print(decode_msg)
     client.close()
 
